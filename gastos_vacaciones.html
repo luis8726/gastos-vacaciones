@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#1a1a2e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Gastos Vacaciones 2026</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  
+  :root {
+    --bg: #0f1117;
+    --bg2: #1a1b26;
+    --bg3: #252639;
+    --accent: #7c6ff7;
+    --accent2: #a78bfa;
+    --text: #e2e8f0;
+    --text2: #94a3b8;
+    --success: #22c55e;
+    --danger: #ef4444;
+    --border: rgba(255,255,255,0.08);
+    --input-bg: rgba(255,255,255,0.05);
+    --input-focus: rgba(124,111,247,0.2);
+    --font: 'Segoe UI', system-ui, sans-serif;
+  }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding-bottom: 80px;
+    font-size: 16px;
+    line-height: 1.5;
+  }
+
+  .header {
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 20px 12px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .header-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--accent2);
+    letter-spacing: -0.3px;
+  }
+
+  .header-sub {
+    font-size: 12px;
+    color: var(--text2);
+    margin-top: 2px;
+  }
+
+  .tabs {
+    display: flex;
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    padding: 0 16px;
+    gap: 0;
+  }
+
+  .tab {
+    flex: 1;
+    padding: 12px 8px;
+    border: none;
+    background: none;
+    color: var(--text2);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    text-align: center;
+  }
+
+  .tab.active {
+    color: var(--accent2);
+    border-bottom-color: var(--accent);
+  }
+
+  .tab-icon { font-size: 16px; }
+
+  .page { display: none; padding: 20px 16px; }
+  .page.active { display: block; }
+
+  /* FORM */
+  .field {
+    margin-bottom: 14px;
+  }
+
+  .field label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text2);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+  }
+
+  .field input,
+  .field select,
+  .field textarea {
+    width: 100%;
+    background: var(--input-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px;
+    color: var(--text);
+    font-size: 16px;
+    font-family: var(--font);
+    outline: none;
+    -webkit-appearance: none;
+    appearance: none;
+    transition: border-color 0.2s, background 0.2s;
+  }
+
+  .field input:focus,
+  .field select:focus {
+    border-color: var(--accent);
+    background: var(--input-focus);
+  }
+
+  .field select option {
+    background: #1a1b26;
+    color: var(--text);
+  }
+
+  .field.row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .field.row > div { margin-bottom: 0; }
+
+  .currency-toggle {
+    display: flex;
+    background: var(--input-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 14px;
+  }
+
+  .currency-btn {
+    flex: 1;
+    padding: 13px;
+    border: none;
+    background: none;
+    color: var(--text2);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .currency-btn.active {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  .estatus-toggle {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  .estatus-btn {
+    flex: 1;
+    padding: 13px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--input-bg);
+    color: var(--text2);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .estatus-btn.active-pagado {
+    background: rgba(34,197,94,0.2);
+    border-color: var(--success);
+    color: var(--success);
+  }
+
+  .estatus-btn.active-pendiente {
+    background: rgba(239,68,68,0.15);
+    border-color: var(--danger);
+    color: var(--danger);
+  }
+
+  .btn-save {
+    width: 100%;
+    padding: 17px;
+    background: var(--accent);
+    border: none;
+    border-radius: 14px;
+    color: #fff;
+    font-size: 17px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 8px;
+    transition: transform 0.1s, opacity 0.2s;
+    letter-spacing: 0.3px;
+  }
+
+  .btn-save:active { transform: scale(0.97); opacity: 0.85; }
+
+  /* TOAST */
+  .toast {
+    position: fixed;
+    bottom: 90px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--success);
+    color: #fff;
+    padding: 12px 24px;
+    border-radius: 50px;
+    font-size: 14px;
+    font-weight: 600;
+    opacity: 0;
+    transition: all 0.3s;
+    z-index: 999;
+    white-space: nowrap;
+  }
+
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  .toast.error { background: var(--danger); }
+
+  /* HISTORIAL */
+  .historial-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+
+  .historial-count {
+    font-size: 13px;
+    color: var(--text2);
+  }
+
+  .btn-export {
+    padding: 8px 16px;
+    background: var(--accent);
+    border: none;
+    border-radius: 10px;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .expense-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+
+  .expense-left { flex: 1; min-width: 0; }
+
+  .expense-desc {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .expense-meta {
+    font-size: 12px;
+    color: var(--text2);
+    margin-top: 3px;
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  .badge-cat {
+    background: rgba(124,111,247,0.2);
+    color: var(--accent2);
+  }
+
+  .badge-pagado {
+    background: rgba(34,197,94,0.15);
+    color: var(--success);
+  }
+
+  .badge-pendiente {
+    background: rgba(239,68,68,0.1);
+    color: var(--danger);
+  }
+
+  .expense-right {
+    text-align: right;
+    flex-shrink: 0;
+    margin-left: 12px;
+  }
+
+  .expense-amount {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--accent2);
+  }
+
+  .expense-date {
+    font-size: 11px;
+    color: var(--text2);
+    margin-top: 2px;
+  }
+
+  /* RESUMEN */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .stat-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px;
+  }
+
+  .stat-label {
+    font-size: 11px;
+    color: var(--text2);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+  }
+
+  .stat-value {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--accent2);
+    line-height: 1.2;
+  }
+
+  .stat-sub {
+    font-size: 11px;
+    color: var(--text2);
+    margin-top: 3px;
+  }
+
+  .category-row {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 16px;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .cat-name {
+    font-size: 13px;
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  .cat-amount {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--accent2);
+  }
+
+  .section-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text2);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 12px;
+  }
+
+  /* Nav bottom */
+  .bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--bg2);
+    border-top: 1px solid var(--border);
+    display: flex;
+    height: 70px;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    z-index: 100;
+  }
+
+  .nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    border: none;
+    background: none;
+    color: var(--text2);
+    font-size: 10px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: color 0.2s;
+  }
+
+  .nav-item.active { color: var(--accent2); }
+  .nav-icon { font-size: 22px; }
+
+  .empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text2);
+  }
+
+  .empty-icon { font-size: 48px; margin-bottom: 12px; }
+
+  /* Scroll helpers */
+  ::-webkit-scrollbar { width: 0; }
+
+  .filter-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+
+  .filter-chip {
+    flex-shrink: 0;
+    padding: 6px 14px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: var(--input-bg);
+    color: var(--text2);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+
+  .filter-chip.active {
+    background: rgba(124,111,247,0.25);
+    border-color: var(--accent);
+    color: var(--accent2);
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-title">✈ Gastos Vacaciones 2026</div>
+  <div class="header-sub" id="header-sub">Cargando registros...</div>
+</div>
+
+<!-- PAGE: NUEVO GASTO -->
+<div class="page active" id="page-nuevo">
+
+  <div class="field">
+    <label>Fecha</label>
+    <input type="date" id="fecha" />
+  </div>
+
+  <div class="field">
+    <label>Descripción</label>
+    <input type="text" id="descripcion" placeholder="Ej: Cena en restaurante..." autocomplete="off" />
+  </div>
+
+  <div class="field">
+    <label>Moneda del monto</label>
+  </div>
+  <div class="currency-toggle">
+    <button class="currency-btn" id="btn-ars" onclick="setCurrency('ARS')">🇦🇷 ARS (Pesos)</button>
+    <button class="currency-btn active" id="btn-usd" onclick="setCurrency('USD')">🇺🇸 USD</button>
+  </div>
+
+  <div class="field">
+    <label>Monto <span id="currency-label" style="color:var(--accent2)">USD</span></label>
+    <input type="number" id="monto" placeholder="0.00" step="0.01" inputmode="decimal" />
+  </div>
+
+  <div class="field">
+    <label>Categoría</label>
+    <select id="clasificacion">
+      <option value="">Seleccionar...</option>
+      <option>Aereo</option>
+      <option>Comunicación</option>
+      <option>Alimentación</option>
+      <option>Equipaje</option>
+      <option>Propinas</option>
+      <option>Indumentaria</option>
+      <option>Hospedaje</option>
+      <option>Transporte</option>
+      <option>Atracciones</option>
+      <option>Perfumes</option>
+      <option>Tocador</option>
+      <option>Souvenirs</option>
+      <option>Regalos</option>
+      <option>Merceria</option>
+      <option>Vehiculo</option>
+      <option>Lavanderia</option>
+      <option>Medicinas</option>
+    </select>
+  </div>
+
+  <div class="field">
+    <label>Método de Pago</label>
+    <select id="metodo_pago">
+      <option value="">Seleccionar...</option>
+      <option>Efectivo</option>
+      <option>TDC Master Card Galicia</option>
+      <option>TDC Visa Galicia</option>
+      <option>TDC Visa BBVA</option>
+      <option>TDC Visa Patagonia</option>
+      <option>Mercado Pago</option>
+    </select>
+  </div>
+
+  <div class="field">
+    <label>Lugar</label>
+    <select id="lugar">
+      <option value="">Seleccionar...</option>
+      <option>Cordoba</option>
+      <option>Santiago del Estero</option>
+      <option>Ruta</option>
+    </select>
+  </div>
+
+  <div class="field">
+    <label>Estado de Pago</label>
+  </div>
+  <div class="estatus-toggle">
+    <button class="estatus-btn" id="btn-pagado" onclick="setEstatus('Pagado')">✓ Pagado</button>
+    <button class="estatus-btn" id="btn-pendiente" onclick="setEstatus('Pendiente')">⏳ Pendiente</button>
+  </div>
+
+  <button class="btn-save" onclick="guardarGasto()">💾 Guardar Gasto</button>
+
+</div>
+
+<!-- PAGE: HISTORIAL -->
+<div class="page" id="page-historial">
+  <div class="historial-header">
+    <span class="historial-count" id="hist-count">0 gastos</span>
+    <button class="btn-export" onclick="exportarCSV()">📥 Exportar CSV</button>
+  </div>
+  
+  <div class="filter-row" id="filter-chips"></div>
+
+  <div id="lista-gastos"></div>
+</div>
+
+<!-- PAGE: RESUMEN -->
+<div class="page" id="page-resumen">
+  <div class="stats-grid" id="stats-grid"></div>
+  <div class="section-title">Por categoría (USD)</div>
+  <div id="cat-breakdown"></div>
+</div>
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav">
+  <button class="nav-item active" id="nav-nuevo" onclick="showPage('nuevo')">
+    <span class="nav-icon">➕</span>
+    Nuevo
+  </button>
+  <button class="nav-item" id="nav-historial" onclick="showPage('historial')">
+    <span class="nav-icon">📋</span>
+    Historial
+  </button>
+  <button class="nav-item" id="nav-resumen" onclick="showPage('resumen')">
+    <span class="nav-icon">📊</span>
+    Resumen
+  </button>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const STORAGE_KEY = 'gastos_vacaciones_2026';
+let gastos = [];
+let currentCurrency = 'USD';
+let currentEstatus = null;
+let activeFilter = 'Todos';
+
+// Cargar datos iniciales del Excel (importados)
+const GASTOS_INICIALES = [];
+
+function init() {
+  const stored = localStorage.getItem(STORAGE_KEY);
+  if (stored) {
+    gastos = JSON.parse(stored);
+  } else {
+    gastos = [...GASTOS_INICIALES];
+    saveGastos();
+  }
+  
+  // Fecha de hoy por defecto
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('fecha').value = today;
+  
+  updateHeaderSub();
+  renderHistorial();
+  renderResumen();
+}
+
+function saveGastos() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(gastos));
+}
+
+function updateHeaderSub() {
+  const totalUSD = gastos.reduce((s, g) => s + (g.monto_usd || 0), 0);
+  document.getElementById('header-sub').textContent = 
+    `${gastos.length} registros · Total USD ${totalUSD.toFixed(2)}`;
+}
+
+function setCurrency(c) {
+  currentCurrency = c;
+  document.getElementById('btn-ars').className = 'currency-btn' + (c==='ARS'?' active':'');
+  document.getElementById('btn-usd').className = 'currency-btn' + (c==='USD'?' active':'');
+  document.getElementById('currency-label').textContent = c;
+  document.getElementById('monto').placeholder = c === 'ARS' ? 'Ej: 25000' : '0.00';
+}
+
+function setEstatus(e) {
+  if (currentEstatus === e) {
+    currentEstatus = null;
+    document.getElementById('btn-pagado').className = 'estatus-btn';
+    document.getElementById('btn-pendiente').className = 'estatus-btn';
+  } else {
+    currentEstatus = e;
+    document.getElementById('btn-pagado').className = 'estatus-btn' + (e==='Pagado'?' active-pagado':'');
+    document.getElementById('btn-pendiente').className = 'estatus-btn' + (e==='Pendiente'?' active-pendiente':'');
+  }
+}
+
+function showPage(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  document.getElementById('nav-' + page).classList.add('active');
+  
+  if (page === 'historial') renderHistorial();
+  if (page === 'resumen') renderResumen();
+}
+
+function guardarGasto() {
+  const fecha = document.getElementById('fecha').value;
+  const descripcion = document.getElementById('descripcion').value.trim();
+  const monto = parseFloat(document.getElementById('monto').value);
+  const clasificacion = document.getElementById('clasificacion').value;
+  const metodo_pago = document.getElementById('metodo_pago').value;
+  const lugar = document.getElementById('lugar').value;
+  
+  if (!fecha) { showToast('Ingresá la fecha', true); return; }
+  if (!descripcion) { showToast('Ingresá una descripción', true); return; }
+  if (!monto || monto <= 0) { showToast('Ingresá un monto válido', true); return; }
+  if (!clasificacion) { showToast('Seleccioná una categoría', true); return; }
+  if (!metodo_pago) { showToast('Seleccioná método de pago', true); return; }
+  if (!lugar) { showToast('Seleccioná el lugar', true); return; }
+  
+  const nuevo = {
+    id: Date.now(),
+    fecha,
+    descripcion,
+    monto: currentCurrency === 'ARS' ? monto : null,
+    monto_usd: currentCurrency === 'USD' ? monto : null,
+    clasificacion,
+    metodo_pago,
+    lugar,
+    estatus: currentEstatus || ''
+  };
+  
+  gastos.push(nuevo);
+  saveGastos();
+  updateHeaderSub();
+  showToast('✓ Gasto guardado');
+  
+  // Reset
+  document.getElementById('descripcion').value = '';
+  document.getElementById('monto').value = '';
+  document.getElementById('clasificacion').value = '';
+  document.getElementById('metodo_pago').value = '';
+  document.getElementById('lugar').value = '';
+  currentEstatus = null;
+  document.getElementById('btn-pagado').className = 'estatus-btn';
+  document.getElementById('btn-pendiente').className = 'estatus-btn';
+}
+
+function renderHistorial() {
+  const categorias = ['Todos', ...new Set(gastos.map(g => g.clasificacion).filter(Boolean))].sort();
+  const chipsCont = document.getElementById('filter-chips');
+  chipsCont.innerHTML = categorias.map(c => 
+    `<button class="filter-chip${c===activeFilter?' active':''}" onclick="setFilter('${c}')">${c}</button>`
+  ).join('');
+  
+  const filtered = activeFilter === 'Todos' ? gastos : gastos.filter(g => g.clasificacion === activeFilter);
+  const lista = document.getElementById('lista-gastos');
+  document.getElementById('hist-count').textContent = `${filtered.length} gastos`;
+  
+  if (filtered.length === 0) {
+    lista.innerHTML = `<div class="empty-state"><div class="empty-icon">📭</div><p>Sin gastos aún</p></div>`;
+    return;
+  }
+  
+  const sorted = [...filtered].sort((a,b) => b.fecha.localeCompare(a.fecha));
+  lista.innerHTML = sorted.map(g => {
+    const amount = g.monto_usd ? `$${g.monto_usd.toFixed(2)} USD` : (g.monto ? `$${g.monto.toLocaleString('es-AR')} ARS` : '-');
+    const badgeClass = g.estatus === 'Pagado' ? 'badge-pagado' : 'badge-pendiente';
+    const estatusHtml = g.estatus ? `<span class="badge ${badgeClass}">${g.estatus}</span>` : '';
+    return `
+    <div class="expense-card">
+      <div class="expense-left">
+        <div class="expense-desc">${g.descripcion}</div>
+        <div class="expense-meta">
+          <span class="badge badge-cat">${g.clasificacion}</span>
+          ${estatusHtml}
+        </div>
+        <div class="expense-meta" style="margin-top:4px">${g.metodo_pago} · ${g.lugar}</div>
+      </div>
+      <div class="expense-right">
+        <div class="expense-amount">${amount}</div>
+        <div class="expense-date">${formatFecha(g.fecha)}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function setFilter(cat) {
+  activeFilter = cat;
+  renderHistorial();
+}
+
+function formatFecha(f) {
+  if (!f) return '';
+  const [y,m,d] = f.split('-');
+  return `${d}/${m}/${y}`;
+}
+
+function renderResumen() {
+  const totalUSD = gastos.reduce((s,g) => s + (g.monto_usd||0), 0);
+  const totalARS = gastos.reduce((s,g) => s + (g.monto||0), 0);
+  const pagados = gastos.filter(g => g.estatus === 'Pagado').length;
+  const lugares = [...new Set(gastos.map(g=>g.lugar).filter(Boolean))];
+  
+  document.getElementById('stats-grid').innerHTML = `
+    <div class="stat-card">
+      <div class="stat-label">Total USD</div>
+      <div class="stat-value">$${totalUSD.toFixed(0)}</div>
+      <div class="stat-sub">dólares</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Total ARS</div>
+      <div class="stat-value">$${(totalARS/1000).toFixed(0)}k</div>
+      <div class="stat-sub">pesos</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Registros</div>
+      <div class="stat-value">${gastos.length}</div>
+      <div class="stat-sub">gastos</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Pagados</div>
+      <div class="stat-value">${pagados}</div>
+      <div class="stat-sub">de ${gastos.length}</div>
+    </div>
+  `;
+  
+  // Por categoría
+  const byCat = {};
+  gastos.forEach(g => {
+    const cat = g.clasificacion || 'Sin categoría';
+    byCat[cat] = (byCat[cat] || 0) + (g.monto_usd || 0);
+  });
+  
+  const sorted = Object.entries(byCat).sort((a,b) => b[1]-a[1]);
+  document.getElementById('cat-breakdown').innerHTML = sorted.map(([cat, amt]) => `
+    <div class="category-row">
+      <span class="cat-name">${cat}</span>
+      <span class="cat-amount">$${amt.toFixed(2)}</span>
+    </div>
+  `).join('');
+}
+
+function exportarCSV() {
+  const headers = ['Fecha','Descripcion','Monto ARS','Monto USD','Clasificacion','Metodo de Pago','Lugar','Estatus'];
+  const rows = gastos.map(g => [
+    g.fecha, g.descripcion, g.monto||'', g.monto_usd||'',
+    g.clasificacion, g.metodo_pago, g.lugar, g.estatus
+  ]);
+  
+  const csv = [headers, ...rows].map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `Gastos_Vacaciones_${new Date().toISOString().split('T')[0]}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('📥 CSV descargado');
+}
+
+function showToast(msg, error=false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast' + (error?' error':'') + ' show';
+  setTimeout(() => t.className = 'toast' + (error?' error':''), 2200);
+}
+
+init();
+</script>
+</body>
+</html>
