@@ -588,7 +588,12 @@
 <!-- PAGE: RESUMEN -->
 <div class="page" id="page-resumen">
   <div class="stats-grid" id="stats-grid"></div>
-  <div class="section-title">Por categoría (USD)</div>
+  <div class="section-title" style="margin-bottom:10px">Por categoría</div>
+  <div class="currency-toggle" style="margin-bottom:16px">
+    <button class="currency-btn active" id="r-btn-usd" onclick="setResumenMoneda('USD')">🇺🇸 USD</button>
+    <button class="currency-btn" id="r-btn-ars" onclick="setResumenMoneda('ARS')">🇦🇷 ARS</button>
+    <button class="currency-btn" id="r-btn-todos" onclick="setResumenMoneda('TODOS')">📊 Todos</button>
+  </div>
   <div id="cat-breakdown"></div>
 </div>
 
@@ -775,11 +780,20 @@ function formatFecha(f) {
   return `${d}/${m}/${y}`;
 }
 
+let resumenMoneda = 'USD';
+
+function setResumenMoneda(m) {
+  resumenMoneda = m;
+  document.getElementById('r-btn-usd').className = 'currency-btn' + (m==='USD'?' active':'');
+  document.getElementById('r-btn-ars').className = 'currency-btn' + (m==='ARS'?' active':'');
+  document.getElementById('r-btn-todos').className = 'currency-btn' + (m==='TODOS'?' active':'');
+  renderCatBreakdown();
+}
+
 function renderResumen() {
   const totalUSD = gastos.reduce((s,g) => s + (g.monto_usd||0), 0);
   const totalARS = gastos.reduce((s,g) => s + (g.monto||0), 0);
   const pagados = gastos.filter(g => g.estatus === 'Pagado').length;
-  const lugares = [...new Set(gastos.map(g=>g.lugar).filter(Boolean))];
   
   document.getElementById('stats-grid').innerHTML = `
     <div class="stat-card">
@@ -803,21 +817,42 @@ function renderResumen() {
       <div class="stat-sub">de ${gastos.length}</div>
     </div>
   `;
-  
-  // Por categoría
+  renderCatBreakdown();
+}
+
+function renderCatBreakdown() {
   const byCat = {};
   gastos.forEach(g => {
     const cat = g.clasificacion || 'Sin categoría';
-    byCat[cat] = (byCat[cat] || 0) + (g.monto_usd || 0);
+    if (!byCat[cat]) byCat[cat] = {usd:0, ars:0};
+    byCat[cat].usd += (g.monto_usd || 0);
+    byCat[cat].ars += (g.monto || 0);
   });
-  
-  const sorted = Object.entries(byCat).sort((a,b) => b[1]-a[1]);
-  document.getElementById('cat-breakdown').innerHTML = sorted.map(([cat, amt]) => `
+
+  const sorted = Object.entries(byCat).sort((a,b) => {
+    const va = resumenMoneda==='ARS' ? a[1].ars : a[1].usd;
+    const vb = resumenMoneda==='ARS' ? b[1].ars : b[1].usd;
+    return vb - va;
+  });
+
+  document.getElementById('cat-breakdown').innerHTML = sorted.map(([cat, vals]) => {
+    let label = '';
+    if (resumenMoneda === 'USD') {
+      label = vals.usd > 0 ? `$${vals.usd.toFixed(2)} USD` : '-';
+    } else if (resumenMoneda === 'ARS') {
+      label = vals.ars > 0 ? `$${vals.ars.toLocaleString('es-AR')} ARS` : '-';
+    } else {
+      const parts = [];
+      if (vals.usd > 0) parts.push(`$${vals.usd.toFixed(2)} USD`);
+      if (vals.ars > 0) parts.push(`$${vals.ars.toLocaleString('es-AR')} ARS`);
+      label = parts.join(' · ') || '-';
+    }
+    return `
     <div class="category-row">
       <span class="cat-name">${cat}</span>
-      <span class="cat-amount">$${amt.toFixed(2)}</span>
-    </div>
-  `).join('');
+      <span class="cat-amount" style="font-size:13px">${label}</span>
+    </div>`;
+  }).join('');
 }
 
 function exportarCSV() {
