@@ -177,6 +177,13 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); co
   <div class="stats-grid" id="stats-grid"></div>
   <div class="section-title">Por clasificación</div>
   <div id="cat-breakdown"></div>
+
+  <div style="margin-top:24px;padding-top:20px;border-top:1px solid var(--border)">
+    <div class="section-title" style="color:var(--danger)">Zona de peligro</div>
+    <button class="btn-save" onclick="resetearTodo()" style="background:rgba(239,68,68,0.15);border:1px solid var(--danger);color:var(--danger);margin-top:0">
+      🗑️ Borrar todos los registros
+    </button>
+  </div>
 </div>
 
 <!-- BOTTOM NAV -->
@@ -465,6 +472,16 @@ function showToast(msg, error = false) {
   t.textContent = msg;
   t.className = 'toast' + (error ? ' error' : '') + ' show';
   setTimeout(() => t.className = 'toast' + (error ? ' error' : ''), 2300);
+}
+
+function resetearTodo() {
+  if (!confirm('¿Borrar TODOS los registros? Esta acción no se puede deshacer.')) return;
+  if (!confirm('Segunda confirmación: ¿Estás seguro? Se eliminarán todos los datos.')) return;
+  gastos = [];
+  save();
+  updateHeader();
+  renderResumen();
+  showToast('🗑️ Todos los registros eliminados');
 }
 
 init();
