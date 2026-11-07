@@ -185,6 +185,14 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); co
   <div class="section-title">Por clasificación</div>
   <div id="cat-breakdown"></div>
 
+  <div class="section-title" style="margin-top:24px">Sincronización con el Excel</div>
+  <div id="sync-status" style="font-size:13px;color:var(--text2);margin-bottom:12px;line-height:1.5"></div>
+  <div class="field"><label>Repositorio privado (usuario/nombre)</label><input type="text" id="sync-repo" autocomplete="off" autocapitalize="off" /></div>
+  <div class="field"><label>Token de GitHub (solo se guarda en este celular)</label><input type="password" id="sync-token" placeholder="github_pat_..." autocomplete="off" autocapitalize="off" /></div>
+  <button class="btn-save" onclick="guardarSync()">🔗 Guardar y probar</button>
+  <button class="btn-save secondary" onclick="sincronizar(false)">🔄 Sincronizar ahora</button>
+  <button class="btn-save secondary" onclick="quitarToken()">Quitar token de este celular</button>
+
   <div style="margin-top:24px;padding-top:20px;border-top:1px solid var(--border)">
     <div class="section-title" style="color:var(--danger)">Zona de peligro</div>
     <button class="btn-save" onclick="resetearTodo()" style="background:rgba(239,68,68,0.15);border:1px solid var(--danger);color:var(--danger);margin-top:0">
@@ -278,17 +286,23 @@ let editingId = null;
 function init() {
   const s = localStorage.getItem(KEY);
   gastos = s ? JSON.parse(s) : [];
+  cargarSync();
   document.getElementById('fecha').value = hoy();
   updateHeader();
+  renderSync();
+  window.addEventListener('online', () => sincronizar(true));
+  if (sync.token) setTimeout(() => sincronizar(true), 800);
 }
 
 function hoy() { return new Date().toISOString().split('T')[0]; }
-function save() { localStorage.setItem(KEY, JSON.stringify(gastos)); }
+function save() { localStorage.setItem(KEY, JSON.stringify(gastos)); programarSync(); }
 
 function updateHeader() {
   const total = gastos.reduce((s, g) => s + (g.monto || 0), 0);
+  const pend = sync.token ? pendientes().length : 0;
+  const est = !sync.token ? '' : (pend ? ` · ⏳ ${pend} sin sincronizar` : ' · ✓ sincronizado');
   document.getElementById('header-sub').textContent =
-    `${gastos.length} registros · Total $${fmtARS(total)}`;
+    `${gastos.length} registros · Total $${fmtARS(total)}${est}`;
 }
 
 function fmtARS(n) {
@@ -496,6 +510,97 @@ function resetearTodo() {
   updateHeader();
   renderResumen();
   showToast('🗑️ Todos los registros eliminados');
+}
+
+/* ===== SINCRONIZACIÓN con repositorio privado de GitHub =====
+   Solo AGREGA o ACTUALIZA gastos en gastos.json; nunca borra. El token vive únicamente en este celular. */
+const SKEY = 'registro_gastos_sync_v1';
+let sync = { repo: 'luis8726/gastos-datos', token: '', hashes: {}, last: null, error: null };
+let syncTimer = null, sincronizando = false;
+
+function cargarSync() {
+  try { const x = localStorage.getItem(SKEY); if (x) sync = Object.assign(sync, JSON.parse(x)); } catch (e) {}
+}
+function guardarEstadoSync() { try { localStorage.setItem(SKEY, JSON.stringify(sync)); } catch (e) {} }
+function huella(g) { return JSON.stringify([g.fecha, g.descripcion, g.monto, g.clasificacion, g.metodo_pago]); }
+function pendientes() { return gastos.filter(g => sync.hashes[g.id] !== huella(g)); }
+
+function renderSync() {
+  const el = document.getElementById('sync-status'); if (!el) return;
+  document.getElementById('sync-repo').value = sync.repo || '';
+  if (!sync.token) { el.innerHTML = 'Sin configurar. Pegá el token y tocá <b>Guardar y probar</b>.'; return; }
+  const p = pendientes().length;
+  const ult = sync.last ? new Date(sync.last).toLocaleString('es-AR') : 'nunca';
+  el.innerHTML = (p ? `⏳ <b>${p}</b> gasto(s) sin sincronizar` : '✓ Todo sincronizado') +
+    `<br>Última sincronización: ${ult}` +
+    (sync.error ? `<br><span style="color:var(--danger)">⚠ ${sync.error}</span>` : '');
+}
+
+function programarSync() {
+  updateHeader(); renderSync();
+  if (!sync.token) return;
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(() => sincronizar(true), 1500);
+}
+
+function b64utf8(str) { return btoa(unescape(encodeURIComponent(str))); }
+function utf8b64(b64) { return decodeURIComponent(escape(atob(b64.replace(/\n/g, '')))); }
+
+async function guardarSync() {
+  const repo = document.getElementById('sync-repo').value.trim();
+  const tok = document.getElementById('sync-token').value.trim();
+  if (!/^[\w.-]+\/[\w.-]+$/.test(repo)) return showToast('Repositorio inválido (usuario/nombre)', true);
+  if (!tok && !sync.token) return showToast('Pegá el token', true);
+  if (tok) sync.token = tok;
+  sync.repo = repo; sync.error = null; guardarEstadoSync();
+  document.getElementById('sync-token').value = '';
+  await sincronizar(false);
+}
+
+function quitarToken() {
+  if (!confirm('¿Quitar el token de este celular? Los gastos ya subidos no se borran.')) return;
+  sync.token = ''; sync.error = null; guardarEstadoSync(); updateHeader(); renderSync();
+  showToast('Token quitado');
+}
+
+async function sincronizar(silencioso) {
+  if (!sync.token) { if (!silencioso) showToast('Configurá el token primero', true); return; }
+  if (sincronizando) return;
+  if (silencioso && !pendientes().length) return;
+  if (!navigator.onLine) { if (!silencioso) showToast('Sin conexión: queda pendiente', true); return; }
+  sincronizando = true;
+  const instantanea = gastos.map(g => ({ ...g }));
+  const url = `https://api.github.com/repos/${sync.repo}/contents/gastos.json`;
+  const hd = { Authorization: 'Bearer ' + sync.token, Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' };
+  try {
+    let ok = false;
+    for (let intento = 0; intento < 3 && !ok; intento++) {
+      let sha = null, remoto = { version: 1, actualizado: null, gastos: [] };
+      const r = await fetch(url + '?t=' + Date.now(), { headers: hd, cache: 'no-store' });
+      if (r.status === 200) { const j = await r.json(); sha = j.sha; remoto = JSON.parse(utf8b64(j.content)); }
+      else if (r.status === 401 || r.status === 403) throw new Error('El token no tiene permiso (revisá el token)');
+      else if (r.status !== 404) throw new Error('GitHub respondió ' + r.status + ' al leer');
+      const mapa = new Map((remoto.gastos || []).map(x => [x.id, x]));
+      instantanea.forEach(g => mapa.set(g.id, { id: g.id, fecha: g.fecha, descripcion: g.descripcion, monto: g.monto, clasificacion: g.clasificacion, metodo_pago: g.metodo_pago }));
+      const salida = { version: 1, actualizado: new Date().toISOString(), gastos: [...mapa.values()].sort((a, b) => a.id - b.id) };
+      const cuerpo = { message: 'Sync desde la app (' + instantanea.length + ' gastos)', content: b64utf8(JSON.stringify(salida, null, 1)) };
+      if (sha) cuerpo.sha = sha;
+      const w = await fetch(url, { method: 'PUT', headers: { ...hd, 'Content-Type': 'application/json' }, body: JSON.stringify(cuerpo) });
+      if (w.status === 200 || w.status === 201) ok = true;
+      else if (w.status === 409 || w.status === 422) continue;
+      else if (w.status === 401 || w.status === 403 || w.status === 404) throw new Error('Sin permiso o repositorio inexistente (' + w.status + ')');
+      else throw new Error('GitHub respondió ' + w.status + ' al escribir');
+    }
+    if (!ok) throw new Error('Conflicto repetido; se reintenta luego');
+    instantanea.forEach(g => { sync.hashes[g.id] = huella(g); });
+    sync.last = new Date().toISOString(); sync.error = null; guardarEstadoSync();
+    if (!silencioso) showToast('✓ Sincronizado');
+  } catch (e) {
+    sync.error = String(e.message || e); guardarEstadoSync();
+    if (!silencioso) showToast('No se pudo sincronizar', true);
+  } finally {
+    sincronizando = false; updateHeader(); renderSync();
+  }
 }
 
 init();
