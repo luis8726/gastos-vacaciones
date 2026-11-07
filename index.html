@@ -191,6 +191,8 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); co
   <div class="field"><label>Token de GitHub (solo se guarda en este celular)</label><input type="password" id="sync-token" placeholder="github_pat_..." autocomplete="off" autocapitalize="off" /></div>
   <button class="btn-save" onclick="guardarSync()">🔗 Guardar y probar</button>
   <button class="btn-save secondary" onclick="sincronizar(false)">🔄 Sincronizar ahora</button>
+  <div class="field" style="margin-top:14px"><label>Limpiar del celular los ya sincronizados con más de (días)</label><input type="number" id="limpiar-dias" value="60" min="7" inputmode="numeric" /></div>
+  <button class="btn-save secondary" onclick="limpiarSincronizados()">🧹 Limpiar sincronizados</button>
   <button class="btn-save secondary" onclick="quitarToken()">Quitar token de este celular</button>
 
   <div style="margin-top:24px;padding-top:20px;border-top:1px solid var(--border)">
@@ -555,6 +557,23 @@ async function guardarSync() {
   sync.repo = repo; sync.error = null; guardarEstadoSync();
   document.getElementById('sync-token').value = '';
   await sincronizar(false);
+}
+
+function limpiarSincronizados() {
+  if (!sync.token || !sync.last) return showToast('Primero sincronizá al menos una vez', true);
+  const dias = Math.max(7, parseInt(document.getElementById('limpiar-dias').value) || 60);
+  const lim = new Date(); lim.setDate(lim.getDate() - dias);
+  const limite = lim.toISOString().split('T')[0];
+  const quitar = gastos.filter(g => sync.hashes[g.id] === huella(g) && g.fecha < limite);
+  if (!quitar.length) return showToast('No hay gastos sincronizados con más de ' + dias + ' días');
+  if (!confirm('Se quitarán de ESTE celular ' + quitar.length + ' gasto(s) ya sincronizados con más de ' + dias + ' días. Siguen guardados en el repositorio y en el Excel. Los pendientes no se tocan. ¿Continuar?')) return;
+  const ids = new Set(quitar.map(g => g.id));
+  gastos = gastos.filter(g => !ids.has(g.id));
+  quitar.forEach(g => { delete sync.hashes[g.id]; });
+  guardarEstadoSync();
+  localStorage.setItem(KEY, JSON.stringify(gastos));
+  updateHeader(); renderSync(); renderResumen();
+  showToast('🧹 ' + quitar.length + ' gasto(s) quitados del celular');
 }
 
 function quitarToken() {
